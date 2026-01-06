@@ -1,0 +1,48 @@
+# ----- Config -----
+ENGINE_DIR := engine
+WEB_DIR := web
+WASM_OUT := $(WEB_DIR)/src/wasm
+
+WASM_PACK := wasm-pack
+NPM := npm
+
+.PHONY: help
+help:
+	@echo "Targets:"
+	@echo "  make setup     - install web deps"
+	@echo "  make wasm      - build Rust->Wasm into web/src/wasm"
+	@echo "  make dev       - build wasm then run Vite dev server"
+	@echo "  make watch     - watch Rust and rebuild wasm on changes"
+	@echo "  make build     - production build"
+	@echo "  make clean     - remove build artifacts"
+
+.PHONY: setup
+setup:
+	cd $(WEB_DIR) && $(NPM) install
+
+.PHONY: wasm
+wasm:
+	cd $(ENGINE_DIR) && $(WASM_PACK) build \
+		--target web \
+		--out-dir ../$(WASM_OUT) \
+		--out-name engine
+
+.PHONY: dev
+dev: wasm
+	cd $(WEB_DIR) && $(NPM) run dev
+
+.PHONY: watch
+watch:
+	cd $(ENGINE_DIR) && cargo watch \
+		-w src -w Cargo.toml \
+		-s "$(WASM_PACK) build --target web --out-dir ../$(WASM_OUT) --out-name engine"
+
+.PHONY: build
+build: wasm
+	cd $(WEB_DIR) && $(NPM) run build
+
+.PHONY: clean
+clean:
+	rm -rf $(WASM_OUT)
+	rm -rf $(WEB_DIR)/dist
+	rm -rf $(WEB_DIR)/node_modules

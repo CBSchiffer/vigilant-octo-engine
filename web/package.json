@@ -1,0 +1,20 @@
+{
+  "name": "web",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "user-facing part of the code",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite-build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "typescript": "^5.0.0"
+  },
+  "author": "",
+  "license": "ISC"
+}
