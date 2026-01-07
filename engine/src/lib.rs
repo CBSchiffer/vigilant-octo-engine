@@ -6,6 +6,11 @@ use wasm_bindgen::prelude::*;
 use crate::{render::Rgb24, worldgen::tile_at};
 
 #[wasm_bindgen]
+pub fn memory_access() -> JsValue {
+    wasm_bindgen::memory()
+}
+
+#[wasm_bindgen]
 pub struct Game {
     seed: u32,
     px: i32,
