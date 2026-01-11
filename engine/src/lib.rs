@@ -28,7 +28,7 @@ impl Game {
     #[wasm_bindgen(constructor)]
     pub fn new(seed: u32, screen_w: u32, screen_h: u32) -> Game {
         let len = (screen_w as usize) * (screen_h as usize);
-        Game {
+        let mut g = Game {
             seed,
             px: 0,
             py: 0,
@@ -37,7 +37,11 @@ impl Game {
             bg_rgb_buff: vec![0; len],
             fg_rgb_buff: vec![0; len],
             glyph_buff: vec![0; len],
+        };
+        while !(tile_at(seed, g.pos_x(), g.pos_y()).is_traversable()) {
+            g.py -= 1;
         }
+        g
     }
 
     pub fn set_viewport(&mut self, view_w: u32, view_h: u32) {
@@ -90,6 +94,17 @@ impl Game {
                 let mut glyph_code: u32 = 0;
                 let mut glyph_color: Rgb24 = 0;
 
+                if let Some(rd) = tile.feature_layer.render_data() {
+                    match rd {
+                        RenderType::Static { glyph, color } => {
+                            glyph_code = glyph as u32;
+                            glyph_color = color;
+                        }
+                        _ => {
+                            // Not implemented yet
+                        }
+                    }
+                }
                 // TODO: Add feature layer rendering
                 if let Some(rd) = tile.resource_layer.render_data() {
                     match rd {

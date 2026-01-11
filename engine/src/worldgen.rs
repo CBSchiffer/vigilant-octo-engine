@@ -1,9 +1,35 @@
-use crate::render::{ASSEMBLER_ID, RenderType, Rgb24};
+use crate::{Game, render::{RenderType, Rgb24, WEIRD_ID}};
+
+static MAX_STRUC_SIZE: u32 = 10;
+static MACRO_CELL_SIZE: u32 = 64;
 
 /// -------------------------
 /// Enums and Structs
 /// -------------------------
 
+struct WorldSnapshot {
+    min_x: i32,
+    min_y: i32,
+    max_x: i32,
+    max_y: i32
+}
+
+impl WorldSnapshot {
+    fn take(g: &Game) -> WorldSnapshot {
+        WorldSnapshot { 
+            min_x: g.pos_x() - div_floor(g.width as i32, 2), 
+            min_y: g.pos_y() - div_floor(g.height as i32, 2), 
+            max_x: g.pos_x() + div_floor(g.width as i32, 2), 
+            max_y: g.pos_y() + div_floor(g.height as i32, 2) 
+        }
+    }
+    fn inflate(&mut self, r: u32) {
+        self.min_x -= r as i32;
+        self.max_x += r as i32;
+        self.min_y -= r as i32;
+        self.max_y += r as i32;
+    }
+}
 
 // Biome decided at worldgen. Determines probability of other features appearing during later stages of worldgen (layer0)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -89,8 +115,7 @@ impl ResourceLayer {
 pub enum FeatureLayer {
     None,
     Tree,
-    Rock,
-    Assembler
+    Rock
 }
 
 // This is wrong and should be implemented again later
@@ -98,10 +123,19 @@ impl FeatureLayer {
     pub fn render_data(self) -> Option<RenderType> {
         match self {
             FeatureLayer::None => None,
-            FeatureLayer::Assembler => Some(RenderType::SpriteCell { sprite_id: ASSEMBLER_ID, local_x: 0, local_y: 0 }),
+            FeatureLayer::Rock => Some(RenderType::Static { glyph: '🪨', color: 0x3f3e3e }),
+            FeatureLayer::Tree => Some(RenderType::Static { glyph: '🌲', color: 0x164633 }),
             _ => None
         }
     }
+}
+
+struct PlacedStructure {
+    id: usize,
+    anchor_x: i32,
+    anchor_y: i32,
+    width: u8,
+    height: u8
 }
 
 
@@ -115,7 +149,7 @@ pub struct WorldgenTile {
 
 impl WorldgenTile {
     pub fn is_traversable(self) -> bool {
-        !matches!(self.resource_layer, ResourceLayer::Fluid(_))
+        !(matches!(self.resource_layer, ResourceLayer::Fluid(_))) && matches!(self.feature_layer, FeatureLayer::None)
     }
 }
 
@@ -158,6 +192,32 @@ fn smoothstep(t: f32) -> f32 {
 /// Linear Interpolation. Returns a value that is t% between (a, b)
 fn lerp(a: f32, b: f32, t: f32) -> f32 {
     a + (b - a) * t
+}
+
+fn macro_cell_of(world_x: i32, world_y: i32, cell_size: u32) -> (i32, i32) {
+    (div_floor(world_x, cell_size as i32), div_floor(world_y, cell_size as i32))
+}
+
+fn structures_in_macro_cell(seed: u32, mcx: i32, mcy: i32) -> Vec<PlacedStructure> {
+
+}
+
+fn visible_structures(g: &Game) -> Vec<PlacedStructure> {
+    let mut view = WorldSnapshot::take(g);
+    view.inflate(MAX_STRUC_SIZE);
+    let (mcx_min, mcy_min) = macro_cell_of(view.min_x, view.min_y, MACRO_CELL_SIZE);
+    let (mcx_max, mcy_max) = macro_cell_of(view.max_x, view.max_y, MACRO_CELL_SIZE);
+
+    let mut objects_in_range = Vec::new();
+    for mcx in mcx_min..=mcx_max {
+        for mcy in mcy_min..=mcy_max {
+            objects_in_range.extend(
+                structures_in_macro_cell(g.seed, mcx, mcy)
+                    .into_iter()
+            );
+        }
+    }
+    objects_in_range
 }
 
 /** Noise function for worldgen.

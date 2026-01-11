@@ -1,10 +1,10 @@
 use std::{collections::HashMap, sync::LazyLock};
 
 pub type Rgb24 = u32;
-const ASSEMBLER_SPRITE: &str = include_str!("../sprites/ascii-art.txt");
+const WEIRD_SPRITE: &str = include_str!("../sprites/ascii-art.txt");
 static SPRITE_LIBRARY: LazyLock<Vec<SpriteConfig>> = LazyLock::new(|| {
     let mut lib: Vec<SpriteConfig> = Vec::new();
-    lib.push(SpriteConfig::from_ascii(ASSEMBLER_SPRITE, 
+    lib.push(SpriteConfig::from_ascii(WEIRD_SPRITE, 
         &HashMap::from([
             ('X', 0xeeff88),
             ('└', 0x2fb1ac)
@@ -12,7 +12,7 @@ static SPRITE_LIBRARY: LazyLock<Vec<SpriteConfig>> = LazyLock::new(|| {
         lib
 });
 
-pub static ASSEMBLER_ID: usize = 0;
+pub static WEIRD_ID: usize = 0;
 
 pub fn get_sprite(id: usize) -> Option<&'static SpriteConfig> {
     SPRITE_LIBRARY.get(id)
